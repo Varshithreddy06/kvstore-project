@@ -109,9 +109,9 @@ def main():
             val = store.get(key)
             if val is None:
                 print('')  # return empty string instead of 'NULL'
-        else:
-            print(val)
-        sys.stdout.flush()
+            else:
+                print(val)
+            sys.stdout.flush()
 
 if __name__ == '__main__':
     try:
