@@ -104,14 +104,14 @@ def main():
         elif cmd == 'GET':
             if len(parts) != 2:
                 print('ERR')
+                sys.stdout.flush()
                 continue
             key = parts[1]
             val = store.get(key)
-            if val is None:
-                print('')  # return empty string instead of 'NULL'
-            else:
+            if val is not None:
                 print(val)
-            sys.stdout.flush()
+                sys.stdout.flush()
+    # if val is None, do nothing (no print, no newline)
 
 if __name__ == '__main__':
     try:
