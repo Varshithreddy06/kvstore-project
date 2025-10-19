@@ -108,14 +108,9 @@ def main():
             key = parts[1]
             val = store.get(key)
             if val is None:
-                print('NULL')
-            else:
-                print(val)
-
+                print('')  # return empty string instead of 'NULL'
         else:
-            # Unknown command
-            print('ERR')
-
+            print(val)
         sys.stdout.flush()
 
 if __name__ == '__main__':
