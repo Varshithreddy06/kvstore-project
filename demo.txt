@@ -1,0 +1,12 @@
+# Demo transcript (for reference)
+# $ python3 kvstore.py
+SET a 10
+OK
+SET a 11
+OK
+GET a
+11
+GET b
+NULL
+EXIT
+OK
