@@ -6,26 +6,37 @@ from typing import List, Tuple, Optional
 LOG_FILE = "data.db"
 
 class KVStore:
-    """A minimal append-only key–value store with linear-scan in-memory index.
+    """
+    A minimal append-only key–value store with a linear-scan in-memory index.
 
-    - No built-in dict/map types are used.
-    - Persistence via append-only writes to data.db.
-    - Last-write-wins semantics.
+    Attributes
+    ----------
+    log_path : str
+        Path to the persistent log file (default "data.db").
+    entries : List[Tuple[str, str]]
+        In-memory list of (key, value) tuples, newest appended to the end.
+
+    Methods
+    -------
+    set(key: str, value: str) -> None
+        Stores the key-value pair persistently.
+    get(key: str) -> Optional[str]
+        Retrieves the last value for the key, or None if not found.
     """
     def __init__(self, log_path: str = LOG_FILE) -> None:
         self.log_path = log_path
-        self.entries: List[Tuple[str, str]] = []  # list of (key, value)
+        self.entries: List[Tuple[str, str]] = []
 
         # Ensure log file exists
         if not os.path.exists(self.log_path):
             with open(self.log_path, 'a', encoding='utf-8'):
                 pass
 
-        # Rebuild entries from log
+        # Rebuild in-memory entries from log
         self._replay_log()
 
     def _replay_log(self) -> None:
-        """Rebuild in-memory entries from log file."""
+        """Rebuild the in-memory entries list by reading the log from disk."""
         try:
             with open(self.log_path, 'r', encoding='utf-8') as f:
                 for line in f:
@@ -39,10 +50,20 @@ class KVStore:
                     if cmd.upper() == 'SET':
                         self.entries.append((key, value))
         except FileNotFoundError:
+            # No log yet; fine
             pass
 
     def set(self, key: str, value: str) -> None:
-        """Append a SET operation to log and update in-memory index."""
+        """
+        Append a SET operation to the log and update in-memory entries.
+
+        Parameters
+        ----------
+        key : str
+            The key to set.
+        value : str
+            The value to associate with the key.
+        """
         record = f"SET {key} {value}\n"
         with open(self.log_path, 'a', encoding='utf-8') as f:
             f.write(record)
@@ -51,7 +72,19 @@ class KVStore:
         self.entries.append((key, value))
 
     def get(self, key: str) -> Optional[str]:
-        """Return last value for key, or None if not present."""
+        """
+        Return the last written value for a key, or None if not present.
+
+        Parameters
+        ----------
+        key : str
+            The key to retrieve.
+
+        Returns
+        -------
+        Optional[str]
+            The last value associated with the key, or None if not found.
+        """
         for k, v in reversed(self.entries):
             if k == key:
                 return v
@@ -59,6 +92,7 @@ class KVStore:
 
 
 def main() -> None:
+    """Main loop: read commands from STDIN and execute them."""
     store = KVStore()
 
     for raw in sys.stdin:
@@ -79,6 +113,7 @@ def main() -> None:
                 if len(parts) < 3:
                     raise ValueError("SET requires key and value")
                 key, value = parts[1], parts[2]
+                # Validate key/value
                 if ('\n' in key) or ('\n' in value) or (key == ''):
                     raise ValueError("Invalid key or value")
                 store.set(key, value)
@@ -92,8 +127,8 @@ def main() -> None:
                 val = store.get(key)
                 if val is not None:
                     print(val)
-                    sys.stdout.flush()
-                # If val is None, do nothing (rubric expects no output)
+                # If key not found, do nothing (rubric expects no output)
+                sys.stdout.flush()
 
             else:
                 raise ValueError("Unknown command")
